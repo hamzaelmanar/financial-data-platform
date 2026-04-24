@@ -1,4 +1,4 @@
-.PHONY: setup up down ingest run test docs analysis dashboard all
+.PHONY: setup up down airflow ingest run test docs analysis dashboard all
 
 # ── First-time setup ──────────────────────────────────────────────────────────
 
@@ -16,6 +16,9 @@ up:
 
 down:
 	docker compose down
+
+airflow:
+	docker compose --profile airflow up -d
 
 # ── Pipeline ──────────────────────────────────────────────────────────────────
 
