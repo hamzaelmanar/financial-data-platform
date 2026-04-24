@@ -1,6 +1,9 @@
 # Environment
 .env
 
+# Local planning notes
+plan.md
+
 # Python
 __pycache__/
 *.py[cod]
