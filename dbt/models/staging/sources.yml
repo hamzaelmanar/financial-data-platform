@@ -1,0 +1,99 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Bronze layer — exact API payloads, no transformations."
+    schema: raw
+    tables:
+      - name: raw_hypersync_lp_events
+        description: "Raw log rows from HyperSync. All columns are TEXT (hex-encoded)."
+        columns:
+          - name: block_number
+            description: "Hex-encoded block number (TEXT)."
+          - name: transaction_hash
+          - name: transaction_index
+          - name: log_index
+          - name: address
+          - name: topic0
+            description: "Event signature hash (keccak256, hex TEXT). Decoded → event_name in staging."
+          - name: topic1
+          - name: topic2
+          - name: topic3
+          - name: data
+            description: "ABI-encoded non-indexed parameters (hex TEXT)."
+          - name: chain_name
+          - name: pool_address
+
+      - name: lp_mint_events
+        description: "Python-decoded Mint events. All numeric columns stored as decimal TEXT strings."
+        columns:
+          - name: block_number
+          - name: transaction_hash
+          - name: transaction_index
+          - name: log_index
+          - name: timestamp
+          - name: chain_name
+          - name: pool_address
+          - name: sender
+          - name: owner
+          - name: tick_lower
+          - name: tick_upper
+          - name: amount
+            description: "uint128 liquidity added — decimal TEXT, cast to NUMERIC(78) in staging."
+          - name: amount0
+            description: "uint256 token0 amount — decimal TEXT."
+          - name: amount1
+            description: "uint256 token1 amount — decimal TEXT."
+
+      - name: lp_burn_events
+        description: "Python-decoded Burn events. All numeric columns stored as decimal TEXT strings."
+        columns:
+          - name: block_number
+          - name: transaction_hash
+          - name: transaction_index
+          - name: log_index
+          - name: timestamp
+          - name: chain_name
+          - name: pool_address
+          - name: owner
+          - name: tick_lower
+          - name: tick_upper
+          - name: amount
+          - name: amount0
+          - name: amount1
+
+      - name: lp_swap_events
+        description: "Python-decoded Swap events. All numeric columns stored as decimal TEXT strings."
+        columns:
+          - name: block_number
+          - name: transaction_hash
+          - name: transaction_index
+          - name: log_index
+          - name: timestamp
+          - name: chain_name
+          - name: pool_address
+          - name: sender
+          - name: recipient
+          - name: amount0
+            description: "int256 — negative means token0 left the pool."
+          - name: amount1
+          - name: sqrt_price_x96
+            description: "uint160 sqrtPriceX96 — used to derive spot price in marts."
+          - name: liquidity
+          - name: tick
+
+      - name: lp_initialize_events
+        description: "Python-decoded Initialize events."
+
+      - name: raw_merkl_campaigns
+        description: "Incentive campaign metadata from the Merkl REST API."
+        columns:
+          - name: campaign_id
+          - name: opportunity_id
+          - name: start_timestamp
+          - name: end_timestamp
+          - name: amount
+          - name: symbol_reward_token
+          - name: decimals_reward_token
+          - name: daily_rewards_value
+          - name: daily_rewards_token_symbol

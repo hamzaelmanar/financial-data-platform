@@ -1,0 +1,59 @@
+version: 2
+
+models:
+  - name: stg_hypersync__lp_events
+    description: >
+      Typed Mint + Burn events, one row per liquidity event.
+      position_key and signed liquidity_delta are added here.
+    columns:
+      - name: transaction_hash
+        tests:
+          - not_null
+      - name: log_index
+        tests:
+          - not_null
+      - name: block_timestamp
+        tests:
+          - not_null
+      - name: event_type
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["Mint", "Burn"]
+      - name: owner
+        tests:
+          - not_null
+      - name: position_key
+        tests:
+          - not_null
+      - name: liquidity_delta
+        tests:
+          - not_null
+
+  - name: stg_hypersync__swap_events
+    description: "Typed Swap events for price derivation."
+    columns:
+      - name: transaction_hash
+        tests:
+          - not_null
+      - name: sqrt_price_x96
+        tests:
+          - not_null
+
+  - name: stg_merkl__campaigns
+    description: "Typed Merkl incentive campaign metadata."
+    columns:
+      - name: campaign_id
+        tests:
+          - not_null
+          - unique
+      - name: start_timestamp
+        tests:
+          - not_null
+      - name: end_timestamp
+        tests:
+          - not_null
+      - name: campaign_duration_days
+        tests:
+          - not_null
