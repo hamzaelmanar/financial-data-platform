@@ -58,5 +58,17 @@ services:
   #   volumes:
   #     - ./dags:/opt/airflow/dags
 
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: fdp_dashboard
+    env_file: .env
+    ports:
+      - "8050:8050"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres_data:
