@@ -1,0 +1,50 @@
+version: 2
+
+models:
+  - name: fct_lp_positions
+    description: >
+      One row per LP (wallet address). Port of metrics.verify_lp_exit().
+      Primary input for KM survival analysis.
+      lp_cohort classifies each LP as pre/during/post campaign entrant.
+    columns:
+      - name: owner
+        tests:
+          - not_null
+          - unique
+      - name: status
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1]
+      - name: total_positions
+        tests:
+          - not_null
+      - name: first_mint_timestamp
+        tests:
+          - not_null
+      - name: exit_timestamp
+        tests:
+          - not_null
+      - name: duration_seconds
+        tests:
+          - not_null
+      - name: lp_cohort
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['pre_campaign', 'during_campaign', 'post_campaign']
+
+  - name: fct_campaign_retention
+    description: >
+      Campaign-level LP retention KPIs. One row per pool.
+      Answers: did the campaign change retention behaviour?
+    columns:
+      - name: pool_address
+        tests:
+          - not_null
+          - unique
+      - name: n_lps_total
+        tests:
+          - not_null
