@@ -1,6 +1,7 @@
 import os
 
 import pandas as pd
+from psycopg2.extras import execute_values
 from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
 
@@ -46,14 +47,37 @@ def write_dataframe(
     """
     engine = get_engine()
     ensure_schema(engine, schema)
-    df.to_sql(
-        name=table_name,
-        con=engine,
-        schema=schema,
-        if_exists=if_exists,
-        index=False,
-        dtype=dtype,
-    )
+
+    # DDL: create or replace table via SQLAlchemy
+    with engine.begin() as conn:
+        if if_exists == "replace":
+            conn.execute(text(f'DROP TABLE IF EXISTS {schema}."{table_name}"'))
+        col_defs = ", ".join(f'"{c}" TEXT' for c in df.columns)
+        conn.execute(text(
+            f'CREATE TABLE IF NOT EXISTS {schema}."{table_name}" ({col_defs})'
+        ))
+
+    if df.empty:
+        return
+
+    # Bulk insert via raw psycopg2 — avoids pandas/SQLAlchemy version issues
+    cols = ", ".join(f'"{c}"' for c in df.columns)
+    rows = [
+        tuple(None if pd.isna(v) else str(v) for v in row)
+        for row in df.itertuples(index=False)
+    ]
+    raw = engine.raw_connection()
+    try:
+        with raw.cursor() as cur:
+            execute_values(
+                cur,
+                f'INSERT INTO {schema}."{table_name}" ({cols}) VALUES %s',
+                rows,
+                page_size=1000,
+            )
+        raw.commit()
+    finally:
+        raw.close()
 
 
 # ── Watermark helpers ────────────────────────────────────────────────────────

@@ -17,7 +17,7 @@ Decoded tables written:
 
 Usage (CLI):
     python -m ingestion.utils.decode_events \
-        --chain celo --pool-address 0xF55791...
+        --chain celo --address 0xF55791...
 
 Usage (programmatic):
     from ingestion.utils.decode_events import decode_and_write
@@ -243,9 +243,9 @@ def decode_and_write(chain_name: str, pool_address: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Decode raw HyperSync LP events")
     parser.add_argument("--chain", required=True)
-    parser.add_argument("--pool-address", required=True)
+    parser.add_argument("--address", required=True)
     args = parser.parse_args()
-    decode_and_write(chain_name=args.chain, pool_address=args.pool_address)
+    decode_and_write(chain_name=args.chain, pool_address=args.address)
 
 
 if __name__ == "__main__":

@@ -14,5 +14,9 @@ dbt-postgres
 lifelines
 matplotlib
 
+# Dashboard
+dash
+plotly
+
 # Agents (deferred)
 # openai-agents
