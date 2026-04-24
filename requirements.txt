@@ -1,0 +1,18 @@
+# Ingestion
+hypersync
+psycopg2-binary
+sqlalchemy
+python-dotenv
+pandas
+pyarrow
+
+# dbt
+dbt-core
+dbt-postgres
+
+# Analysis
+lifelines
+matplotlib
+
+# Agents (deferred)
+# openai-agents

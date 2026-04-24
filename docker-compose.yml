@@ -1,0 +1,62 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: fdp_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Optional: Airflow — only needed for scheduled multi-pool ingestion
+  # Uncomment the services below to enable Airflow local stack
+  #
+  # airflow-init:
+  #   image: apache/airflow:2.9.2
+  #   container_name: fdp_airflow_init
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   environment:
+  #     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/airflow
+  #     AIRFLOW__CORE__EXECUTOR: LocalExecutor
+  #   command: db init
+  #
+  # airflow-scheduler:
+  #   image: apache/airflow:2.9.2
+  #   container_name: fdp_airflow_scheduler
+  #   depends_on:
+  #     airflow-init:
+  #       condition: service_completed_successfully
+  #   environment:
+  #     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/airflow
+  #     AIRFLOW__CORE__EXECUTOR: LocalExecutor
+  #   command: scheduler
+  #   volumes:
+  #     - ./dags:/opt/airflow/dags
+  #
+  # airflow-webserver:
+  #   image: apache/airflow:2.9.2
+  #   container_name: fdp_airflow_webserver
+  #   depends_on:
+  #     airflow-init:
+  #       condition: service_completed_successfully
+  #   environment:
+  #     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/airflow
+  #     AIRFLOW__CORE__EXECUTOR: LocalExecutor
+  #   ports:
+  #     - "8080:8080"
+  #   command: webserver
+  #   volumes:
+  #     - ./dags:/opt/airflow/dags
+
+volumes:
+  postgres_data:
