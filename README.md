@@ -54,7 +54,7 @@ The full analytics engineering lifecycle, end to end:
 - **Analytics engineer**: dbt staging + mart models, tests, documentation, lineage graph — the 80-line `verify_lp_exit()` pandas function becomes a tested SQL model
 - **Data analyst**: a clear output — *did the campaign change retention, and by how much?* — backed by a logrank test and segmented KM curves
 
-Bridge pitch: *"The question 'did this intervention change user retention?' is the same question lesfurets asks about comparison funnel campaigns. I used DeFi data because it's public and the incentive conditions are explicit. The method — segment by treatment, measure retention, test for significance — is domain-agnostic."*
+The domain is DeFi, but the problem structure is not. A Merkl liquidity incentive and a traffic acquisition campaign share the same shape: expose a population to an incentive, wait, then measure whether the resulting behaviour is durable or transient. The pipeline here — ingest events, model position lifecycle in SQL, segment by treatment cohort, test for significance — applies directly to any product where you want to separate genuine retention lift from incentive-driven noise. The data is public on-chain, which makes it a clean sandbox: explicit campaign windows, no consent issues, reproducible from scratch.
 
 ---
 
