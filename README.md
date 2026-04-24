@@ -2,9 +2,47 @@
 
 > **The question**: did this Merkl incentive campaign actually change LP retention behaviour — or did it just attract mercenary liquidity that left when rewards ended?
 
-**Stack**: Python · dbt · DuckDB · Docker · Apache Airflow (optional — see below)
+**Stack**: Python · dbt · PostgreSQL · Dash · Docker · Apache Airflow (optional)
 
 **Origin**: [`uniswap-lp-analysis`](https://github.com/hamzaelmanar/uniswap-lp-analysis) — a working LP retention analysis (Kaplan-Meier survival models, HyperSync + Merkl API). This project refactors that notebook-style script into a tested, orchestrated pipeline with a clean data model.
+
+---
+
+## Quick Start
+
+**Prerequisites**: Python 3.12+, Docker Desktop (for Postgres), a [HyperSync bearer token](https://docs.envio.dev/docs/HyperSync/overview)
+
+```bash
+git clone https://github.com/hamzaelmanar/financial-data-platform
+cd financial-data-platform
+
+# 1. Create venv, install deps, run dbt deps
+make setup
+
+# 2. Fill in credentials (Postgres + HyperSync token)
+cp .env.example .env && nano .env   # or edit in your IDE
+
+# 3. Start Postgres
+make up
+
+# 4. Ingest data (Celo WETH/USDT pool)
+make ingest \
+  CHAIN=celo \
+  ADDRESS=0xF55791AfBB35aD42984f18D6Fe3e1fF73D81900c \
+  URL=https://app.merkl.xyz/opportunities/celo/CLAMM/0xF55791AfBB35aD42984f18D6Fe3e1fF73D81900c
+
+# 5. Run dbt models
+make run
+
+# 6. Open the dashboard (http://localhost:8050)
+make dashboard
+```
+
+**Windows**: dot-source `dev.ps1` first to activate the venv and load `.env` into your shell:
+```powershell
+. .\dev.ps1
+```
+Then use the same `make` commands above.
 
 ---
 
@@ -12,7 +50,7 @@
 
 The full analytics engineering lifecycle, end to end:
 
-- **Data engineer**: Python ingestion from two live APIs (HyperSync on-chain events + Merkl REST API), DuckDB warehouse setup, Airflow DAGs as a forward-looking extension
+- **Data engineer**: Python ingestion from two live APIs (HyperSync on-chain events + Merkl REST API), PostgreSQL warehouse setup, Airflow DAGs as a forward-looking extension
 - **Analytics engineer**: dbt staging + mart models, tests, documentation, lineage graph — the 80-line `verify_lp_exit()` pandas function becomes a tested SQL model
 - **Data analyst**: a clear output — *did the campaign change retention, and by how much?* — backed by a logrank test and segmented KM curves
 
@@ -25,7 +63,7 @@ Bridge pitch: *"The question 'did this intervention change user retention?' is t
 | Layer | Tool | Notes |
 |-------|------|-------|
 | Ingestion | Python | HyperSync (on-chain events) + Merkl REST API |
-| Warehouse | DuckDB | Persistent mode; handles large pools without OOM |
+| Warehouse | PostgreSQL | Docker-managed; schemas: `raw`, `staging`, `marts` |
 | Transformation | dbt core (OSS) | Staging → mart models, full lineage |
 | Data quality | dbt tests | `not_null`, `unique`, `accepted_values` on every model |
 | Analysis | Python (`lifelines`) | KM estimator + logrank test, reads from mart |
@@ -61,7 +99,7 @@ financial-data-platform/
 │
 ├── dbt/
 │   ├── dbt_project.yml
-│   ├── profiles.yml                  ← DuckDB (local) + BigQuery (prod) targets
+│   ├── profiles.yml                  ← PostgreSQL (local) + BigQuery (prod) targets
 │   ├── models/
 │   │   ├── staging/
 │   │   │   ├── sources.yml           ← every raw table declared as a dbt source
@@ -79,7 +117,7 @@ financial-data-platform/
 │   │   ├── hypersync_events.py       ← fetch Mint/Burn/Swap/Collect from HyperSync (port of src/extract.py)
 │   │   └── merkl_campaigns.py       ← fetch campaign metadata from Merkl API (port of src/merkl_campaigns.py)
 │   └── utils/
-│       └── bq_loader.py             ← write raw JSON → DuckDB (local) or BigQuery raw dataset
+│       └── db_loader.py              ← write DataFrames → PostgreSQL via psycopg2 execute_values
 │
 ├── analysis/
 │   └── lp_survival.py               ← KM estimator + logrank test reading from fct_lp_positions mart (port of src/survival_analysis.py)
@@ -119,7 +157,7 @@ financial-data-platform/
 
 ### Gold — Marts (dbt `fct_` models)
 - Domain: `retention/`
-- Materialized as `table` in DuckDB (local) or BigQuery (prod)
+- Materialized as `table` in PostgreSQL (local) or BigQuery (prod)
 - All business logic lives here; minimum tests: `not_null` + `unique` on primary key
 
 | Model | Description | Key columns |
@@ -159,12 +197,12 @@ Airflow is not required to run the pipeline. It is included because the natural 
 
 ### Phase A — Infrastructure
 1. `Makefile` with `ingest`, `run`, `analysis` targets
-2. DuckDB + `profiles.yml` tested locally (`dbt debug --target local`)
+2. PostgreSQL + `profiles.yml` tested locally (`dbt debug`)
 3. One empty staging model runs clean (`dbt run`)
 
 ### Phase B — First Pipeline
 5. `ingestion/sources/hypersync_events.py` — port `src/extract.py`; fetches Mint/Burn/Swap/Collect events via HyperSync for a given pool address
-6. Raw events land in DuckDB bronze layer (`raw_hypersync_lp_events`)
+6. Raw events land in PostgreSQL `raw` schema (`raw_hypersync_lp_events`)
 8. `stg_hypersync__lp_events.sql` — staging model with `position_key` construction and signed `liquidity_delta`; `accepted_values` test on `event_type`
 9. `fct_lp_positions.sql` — port `verify_lp_exit()` into SQL window functions: cumulative liquidity per position, exit detection, `duration_days`
 
@@ -192,7 +230,7 @@ Airflow is not required to run the pipeline. It is included because the natural 
 ### Core pipeline (required for demo)
 - [ ] `Makefile`
 - [ ] `dbt/dbt_project.yml`
-- [ ] `dbt/profiles.yml` — DuckDB local target
+- [ ] `dbt/profiles.yml` — PostgreSQL local target
 - [ ] `dbt/models/staging/sources.yml`
 - [ ] `dbt/models/staging/stg_hypersync__lp_events.sql`
 - [ ] `dbt/models/staging/stg_merkl__campaigns.sql`
@@ -200,7 +238,7 @@ Airflow is not required to run the pipeline. It is included because the natural 
 - [ ] `dbt/models/marts/retention/fct_campaign_retention.sql`
 - [ ] `ingestion/sources/hypersync_events.py`
 - [ ] `ingestion/sources/merkl_campaigns.py`
-- [ ] `ingestion/utils/duckdb_loader.py`
+- [ ] `ingestion/utils/db_loader.py`
 - [ ] `analysis/lp_survival.py`
 
 ### Airflow extension (optional)
