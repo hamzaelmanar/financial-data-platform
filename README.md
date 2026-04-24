@@ -40,7 +40,6 @@ cd financial-data-platform
 
 make setup                # create venv, install deps, dbt deps
 cp .env.example .env      # fill in Postgres + HyperSync credentials
-make up                   # start Postgres (Docker)
 make ingest               # fetch on-chain events + Merkl campaigns
 make run                  # run dbt models
 make dashboard            # open http://localhost:8050
@@ -51,8 +50,11 @@ make dashboard            # open http://localhost:8050
 . .\dev.ps1
 ```
 
+> **PostgreSQL must be installed locally** (not Docker). Containers connect to it via `host.docker.internal`.
 > Airflow is optional. `make ingest && make run && make dashboard` is the full pipeline.
 > To start the Airflow stack: `docker compose --profile airflow up -d` (UI at `localhost:8080`).
+
+Full prerequisites, environment variables, and design decisions: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 
 ---
 
