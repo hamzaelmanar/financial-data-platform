@@ -70,5 +70,3 @@ select
     max(case when lp_cohort = 'post_campaign'   then median_hold_seconds end) as median_hold_s_post
 from retention
 group by chain_name, pool_address
-
-group by chain_name, pool_address
