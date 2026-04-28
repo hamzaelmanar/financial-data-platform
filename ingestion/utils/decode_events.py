@@ -205,11 +205,9 @@ def decode_and_write(chain_name: str, pool_address: str) -> None:
         """
     )
     with engine.connect() as conn:
-        raw = pd.read_sql(
-            query,
-            conn,
-            params={"chain": chain_name, "pool": pool_address.lower(), "last_decoded": last_decoded},
-        )
+        result = conn.execute(query, {"chain": chain_name, "pool": pool_address.lower(), "last_decoded": last_decoded})
+        rows = result.fetchall()
+        raw = pd.DataFrame(rows, columns=result.keys())
 
     if raw.empty:
         print(f"No new rows to decode for {pool_address} on {chain_name} (watermark: {last_decoded}).")

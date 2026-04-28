@@ -17,44 +17,46 @@
 with
 
 mint_events as (
-    select
-        block_number::bigint                    as block_number,
-        transaction_hash,
-        transaction_index::bigint               as transaction_index,
-        log_index::bigint                       as log_index,
-        timestamp::bigint                       as block_timestamp,
-        chain_name,
-        pool_address,
-        'Mint'                                  as event_type,
-        lower(owner)                            as owner,
-        lower(sender)                           as sender,
-        tick_lower::bigint                      as tick_lower,
-        tick_upper::bigint                      as tick_upper,
-        cast(amount as numeric(78))             as liquidity_raw,
-        cast(amount as numeric(78))             as liquidity_delta,   -- positive
-        cast(amount0 as numeric(78))            as amount0_raw,
-        cast(amount1 as numeric(78))            as amount1_raw
+     select
+         block_number::bigint                    as block_number,
+         transaction_hash,
+         transaction_index::bigint               as transaction_index,
+         log_index::bigint                       as log_index,
+         timestamp::bigint                       as block_timestamp,
+         chain_name,
+         pool_address,
+         'Mint'                                  as event_type,
+         lower(owner)                            as owner,
+         lower(sender)                           as sender,
+         tick_lower::bigint                      as tick_lower,
+         tick_upper::bigint                      as tick_upper,
+         cast(amount as numeric(78))             as liquidity_raw,
+         -- liquidity_delta: change in liquidity (+ for Mint, - for Burn)
+         cast(amount as numeric(78))             as liquidity_delta,
+         cast(amount0 as numeric(78))            as amount0_raw,
+         cast(amount1 as numeric(78))            as amount1_raw
     from {{ source('raw', 'lp_mint_events') }}
 ),
 
 burn_events as (
-    select
-        block_number::bigint                    as block_number,
-        transaction_hash,
-        transaction_index::bigint               as transaction_index,
-        log_index::bigint                       as log_index,
-        timestamp::bigint                       as block_timestamp,
-        chain_name,
-        pool_address,
-        'Burn'                                  as event_type,
-        lower(owner)                            as owner,
-        null::text                              as sender,
-        tick_lower::bigint                      as tick_lower,
-        tick_upper::bigint                      as tick_upper,
-        cast(amount as numeric(78))             as liquidity_raw,
-        -cast(amount as numeric(78))            as liquidity_delta,   -- negative
-        cast(amount0 as numeric(78))            as amount0_raw,
-        cast(amount1 as numeric(78))            as amount1_raw
+     select
+         block_number::bigint                    as block_number,
+         transaction_hash,
+         transaction_index::bigint               as transaction_index,
+         log_index::bigint                       as log_index,
+         timestamp::bigint                       as block_timestamp,
+         chain_name,
+         pool_address,
+         'Burn'                                  as event_type,
+         lower(owner)                            as owner,
+         null::text                              as sender,
+         tick_lower::bigint                      as tick_lower,
+         tick_upper::bigint                      as tick_upper,
+         cast(amount as numeric(78))             as liquidity_raw,
+         -- liquidity_delta: change in liquidity (+ for Mint, - for Burn)
+         -cast(amount as numeric(78))            as liquidity_delta,
+         cast(amount0 as numeric(78))            as amount0_raw,
+         cast(amount1 as numeric(78))            as amount1_raw
     from {{ source('raw', 'lp_burn_events') }}
     where cast(amount as numeric(78)) > 0  -- exclude zero-amount burns (dust)
 ),
