@@ -71,8 +71,10 @@ python dashboard/app.py
 ```
 
 > **PostgreSQL must be installed locally** (not Docker). Containers connect to it via `host.docker.internal`.
-> Airflow is optional. `make ingest && make run && make dashboard` is the full pipeline.
+> Airflow is optional. The commands above are the full pipeline — no Docker required.
 > To start the Airflow stack: `docker compose --profile airflow up -d` (UI at `localhost:8080`).
+> **Port conflict**: `dbt docs serve` also defaults to `localhost:8080`. If Airflow is running, use `dbt docs serve --profiles-dir . --port 8081` instead.
+> The `fdp_dashboard` container (`docker compose up`) is an alternative to `python dashboard/app.py` — useful for deployment or sharing without a local venv. Both connect to the same Postgres.
 
 Full prerequisites, environment variables, and design decisions: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 

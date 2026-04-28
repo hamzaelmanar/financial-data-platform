@@ -118,6 +118,8 @@ Notable dbt patterns used:
 ```bash
 make run          # dbt run
 make test         # dbt test
+make docs         # dbt docs generate + serve → localhost:8080
+                  # If Airflow is running: dbt docs serve --profiles-dir . --port 8081
 ```
 
 ### Analysis (`analysis/`)
@@ -133,10 +135,14 @@ Dash + Plotly, three tabs:
 2. **Retention KPIs** — bar charts from `fct_campaign_retention`
 3. **Raw positions** — filterable table of `fct_lp_positions`
 
-Served in a Docker container, connecting to local Postgres via `host.docker.internal`.
+Runs via `python dashboard/app.py` locally (no Docker needed). A `fdp_dashboard` Docker container is also provided for deployment or sharing without a local venv — both connect to the same Postgres via `host.docker.internal`.
 
 ```bash
-make dashboard    # starts container, opens localhost:8050
+# Local (venv active)
+python dashboard/app.py           # → localhost:8050
+
+# Or via Docker (no venv required)
+docker compose up -d dashboard    # → localhost:8050
 ```
 
 ### Orchestration (`dags/`)
@@ -195,6 +201,8 @@ docker compose --profile airflow up -d
 - Airflow UI: `http://localhost:8080` (admin / admin)
 - Dashboard: `http://localhost:8050`
 - Containers: `fdp_airflow_webserver`, `fdp_airflow_scheduler`, `fdp_dashboard`
+
+> **Port conflict**: `dbt docs serve` defaults to `localhost:8080`. With Airflow running, use `--port 8081`.
 
 Airflow is additive — the `make ingest && make run && make dashboard` pipeline works identically without it.
 
