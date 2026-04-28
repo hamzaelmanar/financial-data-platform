@@ -45,9 +45,29 @@ make run                  # run dbt models
 make dashboard            # open http://localhost:8050
 ```
 
-**Windows** — load the venv and `.env` first:
+**Windows** — `make` is not available natively. Use PowerShell instead:
+
 ```powershell
+# 1. Setup (one-time)
+python -m venv .venv
+.venv\Scripts\pip install --upgrade pip
+.venv\Scripts\pip install -r requirements.txt
+Copy-Item .env.example .env        # then edit .env with your credentials
+cd dbt ; ..\\.venv\Scripts\dbt deps --profiles-dir . ; cd ..
+
+# 2. Every new terminal — activate venv + load .env
 . .\dev.ps1
+
+# 3. Ingest (uses POOL_CHAIN, POOL_ADDRESS, MERKL_URL from .env)
+python -m ingestion.sources.hypersync_events --chain $env:POOL_CHAIN --address $env:POOL_ADDRESS
+python -m ingestion.utils.decode_events --chain $env:POOL_CHAIN --address $env:POOL_ADDRESS
+python -m ingestion.sources.merkl_campaigns --url $env:MERKL_URL
+
+# 4. Run dbt models
+cd dbt ; dbt run --profiles-dir . ; cd ..
+
+# 5. Dashboard → http://localhost:8050
+python dashboard/app.py
 ```
 
 > **PostgreSQL must be installed locally** (not Docker). Containers connect to it via `host.docker.internal`.
