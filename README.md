@@ -1,5 +1,16 @@
 ﻿# Financial Data Platform
 
+Analytics engineering portfolio project. Raw on-chain events and a REST API ingested into PostgreSQL, modeled through a dbt staging → mart layer, tested, and consumed by a survival analysis and interactive dashboard.
+
+**AE craft demonstrated:**
+- Source declarations with column-level tests (`not_null`, `unique`, `accepted_values`) and freshness checks
+- Staging/mart separation with explicit grain per model; `generate_schema_name` macro override for schema isolation
+- Surrogate key generation via `dbt_utils`; signed `liquidity_delta` derived at staging, not in the mart
+- Cohort flag (`entered_during_campaign`) joined once at the mart level — downstream models stay simple
+- Airflow DAGs as orchestration wiring only — business logic stays in Python modules, not operators
+
+---
+
 > **The question**: did this Merkl incentive campaign actually change LP retention — or did it attract mercenary liquidity that left when rewards ended?
 
 - **Ingestion design**: two live APIs, incremental watermark-based fetch, raw layer preserved as-is
