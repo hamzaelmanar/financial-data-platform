@@ -1,6 +1,6 @@
 ﻿# Financial Data Platform
 
-Analytics engineering portfolio project. Raw on-chain events and a REST API ingested into PostgreSQL, modeled through a dbt staging → mart layer, tested, and consumed by a survival analysis and interactive dashboard.
+Raw on-chain events and a REST API ingested into PostgreSQL, modeled through a dbt staging → mart layer, tested, and consumed by a survival analysis and interactive dashboard.
 
 **Architectural decisions:**
 - Source declarations with column-level tests (`not_null`, `unique`, `accepted_values`) and freshness checks
